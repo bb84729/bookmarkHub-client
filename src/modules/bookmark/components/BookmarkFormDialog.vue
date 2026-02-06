@@ -10,22 +10,32 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import type { Bookmark } from '@/types'
+import type { Bookmark, Folder } from '@/types'
 
 const props = defineProps<{
   open: boolean
   bookmark?: Bookmark | null
+  folders?: Folder[]
 }>()
 
 const emit = defineEmits<{
   'update:open': [value: boolean]
-  submit: [data: { title: string; url: string; description: string; tags: string[] }]
+  submit: [
+    data: {
+      title: string
+      url: string
+      description: string
+      tags: string[]
+      folder: string | null
+    },
+  ]
 }>()
 
 const title = ref('')
 const url = ref('')
 const description = ref('')
 const tags = ref('')
+const folderId = ref<string | null>(null)
 
 const isEditMode = computed(() => !!props.bookmark)
 
@@ -41,15 +51,17 @@ watch(
         url.value = props.bookmark.url
         description.value = props.bookmark.description || ''
         tags.value = props.bookmark.tags.join(', ')
+        folderId.value = props.bookmark.folder || null
       } else {
         title.value = ''
         url.value = ''
         description.value = ''
         tags.value = ''
+        folderId.value = null
       }
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 
 const handleSubmit = () => {
@@ -58,6 +70,7 @@ const handleSubmit = () => {
     url: url.value,
     description: description.value,
     tags: tags.value ? tags.value.split(',').map((t) => t.trim()) : [],
+    folder: folderId.value,
   })
 }
 
@@ -93,10 +106,22 @@ const handleOpenChange = (value: boolean) => {
           <Input id="tags" v-model="tags" placeholder="tag1, tag2, tag3" />
         </div>
 
+        <div class="space-y-2">
+          <Label for="folder">Folder</Label>
+          <select
+            id="folder"
+            v-model="folderId"
+            class="w-full h-9 px-3 py-1 border border-input rounded-md bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          >
+            <option :value="null">No Folder</option>
+            <option v-for="folder in folders" :key="folder._id" :value="folder._id">
+              {{ folder.name }}
+            </option>
+          </select>
+        </div>
+
         <DialogFooter>
-          <Button type="button" variant="outline" @click="handleOpenChange(false)">
-            Cancel
-          </Button>
+          <Button type="button" variant="outline" @click="handleOpenChange(false)"> Cancel </Button>
           <Button type="submit">Save</Button>
         </DialogFooter>
       </form>

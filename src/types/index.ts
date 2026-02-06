@@ -47,6 +47,16 @@ export interface UpdateBookmarkData {
   tags?: string[]
 }
 
+// 新增資料夾資料
+export interface CreateFolderData {
+  name: string
+}
+
+// 更新資料夾資料
+export interface UpdateFolderData {
+  name: string
+}
+
 // API 錯誤
 export interface ApiError {
   error: string

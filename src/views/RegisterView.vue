@@ -2,6 +2,9 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/api/axios'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 
 const router = useRouter()
 
@@ -42,44 +45,40 @@ const handleRegister = async () => {
         {{ error }}
       </div>
 
-      <form @submit.prevent="handleRegister">
-        <div class="mb-4">
-          <label class="block text-gray-700 mb-2">Name</label>
-          <input
+      <form @submit.prevent="handleRegister" class="space-y-4">
+        <div class="space-y-2">
+          <Label for="name">Name</Label>
+          <Input
+            id="name"
             v-model="name"
             type="text"
-            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your name"
           />
         </div>
 
-        <div class="mb-4">
-          <label class="block text-gray-700 mb-2">Email</label>
-          <input
+        <div class="space-y-2">
+          <Label for="email">Email</Label>
+          <Input
+            id="email"
             v-model="email"
             type="email"
-            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Enter your email"
           />
         </div>
 
-        <div class="mb-6">
-          <label class="block text-gray-700 mb-2">Password</label>
-          <input
+        <div class="space-y-2">
+          <Label for="password">Password</Label>
+          <Input
+            id="password"
             v-model="password"
             type="password"
-            class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="At least 6 characters"
           />
         </div>
 
-        <button
-          type="submit"
-          :disabled="loading"
-          class="w-full bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-        >
+        <Button type="submit" :disabled="loading" class="w-full">
           {{ loading ? 'Loading...' : 'Register' }}
-        </button>
+        </Button>
       </form>
 
       <p class="text-center mt-4 text-gray-600">

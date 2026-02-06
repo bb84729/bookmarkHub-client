@@ -1,64 +1,154 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBookmarkStore } from '@/stores/bookmarks'
-import type { Bookmark } from '@/types'
-import { Pencil, X } from 'lucide-vue-next'
+import { useFolderStore } from '@/stores/folders'
+import type { Bookmark, Folder } from '@/types'
+import { Pencil, Trash2, FolderPlus } from 'lucide-vue-next'
+import { Button } from '@/components/ui/button'
 import AppHeader from '@/components/AppHeader.vue'
 import BookmarkSearch from '@/modules/bookmark/components/BookmarkSearch.vue'
 import BookmarkFormDialog from '@/modules/bookmark/components/BookmarkFormDialog.vue'
+import FolderList from '@/modules/folder/components/FolderList.vue'
+import FolderFormDialog from '@/modules/folder/components/FolderFormDialog.vue'
+import DeleteConfirmDialog from '@/components/DeleteConfirmDialog.vue'
 
 const router = useRouter()
-const store = useBookmarkStore()
+const bookmarkStore = useBookmarkStore()
+const folderStore = useFolderStore()
 
-// Dialog state
-const dialogOpen = ref(false)
+// Bookmark dialog state
+const bookmarkDialogOpen = ref(false)
 const editingBookmark = ref<Bookmark | null>(null)
 
-// Open create dialog
-const openCreateDialog = () => {
+// Folder dialog state
+const folderDialogOpen = ref(false)
+const editingFolder = ref<Folder | null>(null)
+
+// Delete dialog state
+const deleteDialogOpen = ref(false)
+const deleteTarget = ref<{ type: 'bookmark' | 'folder'; id: string } | null>(null)
+
+// Selected folder filter
+const selectedFolderId = ref<string | null>(null)
+
+// Filtered bookmarks based on selected folder
+const filteredBookmarks = computed(() => {
+  if (selectedFolderId.value === null) {
+    return bookmarkStore.bookmarks
+  }
+  return bookmarkStore.bookmarks.filter((b) => b.folder === selectedFolderId.value)
+})
+
+// Get folder name by id
+const getFolderName = (folderId: string | undefined) => {
+  if (!folderId) return null
+  const folder = folderStore.folders.find((f) => f._id === folderId)
+  return folder?.name || null
+}
+
+// Bookmark actions
+const openCreateBookmarkDialog = () => {
   editingBookmark.value = null
-  dialogOpen.value = true
+  bookmarkDialogOpen.value = true
 }
 
-// Open edit dialog
-const openEditDialog = (bookmark: Bookmark) => {
+const openEditBookmarkDialog = (bookmark: Bookmark) => {
   editingBookmark.value = bookmark
-  dialogOpen.value = true
+  bookmarkDialogOpen.value = true
 }
 
-// Handle form submit (create or update)
-const handleFormSubmit = async (data: {
+const handleBookmarkSubmit = async (data: {
   title: string
   url: string
   description: string
   tags: string[]
+  folder: string | null
 }) => {
   if (editingBookmark.value) {
-    const result = await store.updateBookmark(editingBookmark.value._id, data)
+    const result = await bookmarkStore.updateBookmark(editingBookmark.value._id, data)
     if (result) {
-      dialogOpen.value = false
+      bookmarkDialogOpen.value = false
       editingBookmark.value = null
     }
   } else {
-    const result = await store.createBookmark(data)
+    const result = await bookmarkStore.createBookmark(data)
     if (result) {
-      dialogOpen.value = false
+      bookmarkDialogOpen.value = false
     }
   }
 }
 
-// Delete bookmark
-const handleDelete = async (id: string) => {
-  if (!confirm('Are you sure you want to delete this bookmark?')) {
-    return
-  }
-  await store.deleteBookmark(id)
+const openDeleteBookmarkDialog = (id: string) => {
+  deleteTarget.value = { type: 'bookmark', id }
+  deleteDialogOpen.value = true
 }
 
-// Search bookmarks
+// Folder actions
+const openCreateFolderDialog = () => {
+  editingFolder.value = null
+  folderDialogOpen.value = true
+}
+
+const openEditFolderDialog = (folder: Folder) => {
+  editingFolder.value = folder
+  folderDialogOpen.value = true
+}
+
+const handleFolderSubmit = async (data: { name: string }) => {
+  if (editingFolder.value) {
+    const result = await folderStore.updateFolder(editingFolder.value._id, data)
+    if (result) {
+      folderDialogOpen.value = false
+      editingFolder.value = null
+    }
+  } else {
+    const result = await folderStore.createFolder(data)
+    if (result) {
+      folderDialogOpen.value = false
+    }
+  }
+}
+
+const openDeleteFolderDialog = (folderId: string) => {
+  deleteTarget.value = { type: 'folder', id: folderId }
+  deleteDialogOpen.value = true
+}
+
+const handleDeleteConfirm = async () => {
+  if (!deleteTarget.value) return
+
+  if (deleteTarget.value.type === 'bookmark') {
+    await bookmarkStore.deleteBookmark(deleteTarget.value.id)
+  } else {
+    const success = await folderStore.deleteFolder(deleteTarget.value.id)
+    if (success && selectedFolderId.value === deleteTarget.value.id) {
+      selectedFolderId.value = null
+    }
+  }
+  deleteTarget.value = null
+}
+
+const handleSelectFolder = (folderId: string | null) => {
+  selectedFolderId.value = folderId
+}
+
+// Delete dialog computed
+const deleteDialogTitle = computed(() => {
+  if (!deleteTarget.value) return ''
+  return deleteTarget.value.type === 'bookmark' ? 'Delete Bookmark' : 'Delete Folder'
+})
+
+const deleteDialogDescription = computed(() => {
+  if (!deleteTarget.value) return ''
+  return deleteTarget.value.type === 'bookmark'
+    ? 'Are you sure you want to delete this bookmark? This action cannot be undone.'
+    : 'Are you sure you want to delete this folder? Bookmarks in this folder will not be deleted.'
+})
+
+// Search
 const handleSearch = async (query: string) => {
-  await store.searchBookmarks(query)
+  await bookmarkStore.searchBookmarks(query)
 }
 
 // Logout
@@ -68,90 +158,139 @@ const handleLogout = () => {
 }
 
 onMounted(() => {
-  store.fetchBookmarks()
+  bookmarkStore.fetchBookmarks()
+  folderStore.fetchFolders()
 })
 </script>
 
 <template>
   <div class="min-h-screen bg-gray-100">
     <!-- Header -->
-    <AppHeader :on-new-click="openCreateDialog" :on-logout="handleLogout" />
+    <AppHeader :on-new-click="openCreateBookmarkDialog" :on-logout="handleLogout" />
 
-    <!-- Search -->
-    <div class="max-w-5xl mx-auto px-4 pt-8">
-      <BookmarkSearch @search="handleSearch" />
-    </div>
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <div class="flex gap-6">
+        <!-- Sidebar - Folders -->
+        <aside class="w-64 flex-shrink-0">
+          <div class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="font-semibold text-gray-700">Folders</h2>
+              <Button variant="ghost" size="icon" @click="openCreateFolderDialog">
+                <FolderPlus class="size-4" />
+              </Button>
+            </div>
 
-    <!-- Main -->
-    <main class="max-w-5xl mx-auto px-4 py-8">
-      <!-- Error -->
-      <div v-if="store.error" class="bg-red-100 text-red-700 p-3 rounded mb-4">
-        {{ store.error }}
-      </div>
+            <FolderList
+              :folders="folderStore.folders"
+              :selected-folder-id="selectedFolderId"
+              @select="handleSelectFolder"
+              @edit="openEditFolderDialog"
+              @delete="openDeleteFolderDialog"
+            />
+          </div>
+        </aside>
 
-      <!-- Loading -->
-      <div v-if="store.loading" class="text-center text-gray-500">Loading...</div>
+        <!-- Main Content -->
+        <main class="flex-1">
+          <!-- Search -->
+          <div class="mb-6">
+            <BookmarkSearch @search="handleSearch" />
+          </div>
 
-      <!-- No bookmarks -->
-      <div v-else-if="store.bookmarks.length === 0" class="text-center text-gray-500">
-        No bookmarks yet
-      </div>
+          <!-- Error -->
+          <div v-if="bookmarkStore.error" class="bg-red-100 text-red-700 p-3 rounded mb-4">
+            {{ bookmarkStore.error }}
+          </div>
 
-      <!-- Bookmark list -->
-      <div v-else class="space-y-4">
-        <div
-          v-for="bookmark in store.bookmarks"
-          :key="bookmark._id"
-          class="bg-white p-4 rounded-lg shadow hover:shadow-md"
-        >
-          <div class="flex justify-between items-start">
-            <div>
-              <a
-                :href="bookmark.url"
-                target="_blank"
-                class="text-lg font-semibold text-blue-600 hover:underline"
-              >
-                {{ bookmark.title }}
-              </a>
-              <p v-if="bookmark.description" class="text-gray-600 mt-1">
-                {{ bookmark.description }}
-              </p>
-              <div v-if="bookmark.tags.length > 0" class="mt-2 flex gap-2">
-                <span
-                  v-for="tag in bookmark.tags"
-                  :key="tag"
-                  class="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded"
-                >
-                  {{ tag }}
-                </span>
+          <!-- Loading -->
+          <div v-if="bookmarkStore.loading" class="text-center text-gray-500">Loading...</div>
+
+          <!-- No bookmarks -->
+          <div v-else-if="filteredBookmarks.length === 0" class="text-center text-gray-500 py-8">
+            {{ selectedFolderId ? 'No bookmarks in this folder' : 'No bookmarks yet' }}
+          </div>
+
+          <!-- Bookmark list -->
+          <div v-else class="space-y-4">
+            <div
+              v-for="bookmark in filteredBookmarks"
+              :key="bookmark._id"
+              class="bg-white p-4 rounded-lg shadow hover:shadow-md"
+            >
+              <div class="flex justify-between items-start">
+                <div class="flex-1 min-w-0">
+                  <a
+                    :href="bookmark.url"
+                    target="_blank"
+                    class="text-lg font-semibold text-blue-600 hover:underline"
+                  >
+                    {{ bookmark.title }}
+                  </a>
+                  <p v-if="bookmark.description" class="text-gray-600 mt-1">
+                    {{ bookmark.description }}
+                  </p>
+                  <div class="mt-2 flex flex-wrap gap-2">
+                    <!-- Folder badge -->
+                    <span
+                      v-if="getFolderName(bookmark.folder)"
+                      class="bg-blue-50 text-blue-600 text-sm px-2 py-1 rounded"
+                    >
+                      📁 {{ getFolderName(bookmark.folder) }}
+                    </span>
+                    <!-- Tags -->
+                    <span
+                      v-for="tag in bookmark.tags"
+                      :key="tag"
+                      class="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded"
+                    >
+                      {{ tag }}
+                    </span>
+                  </div>
+                </div>
+                <div class="flex gap-2 ml-4">
+                  <button
+                    @click="openEditBookmarkDialog(bookmark)"
+                    class="text-gray-400 hover:text-blue-600"
+                    title="Edit"
+                  >
+                    <Pencil class="size-4" />
+                  </button>
+                  <button
+                    @click="openDeleteBookmarkDialog(bookmark._id)"
+                    class="text-gray-400 hover:text-red-600"
+                    title="Delete"
+                  >
+                    <Trash2 class="size-4" />
+                  </button>
+                </div>
               </div>
             </div>
-            <div class="flex gap-2">
-              <button
-                @click="openEditDialog(bookmark)"
-                class="text-gray-400 hover:text-blue-600"
-                title="Edit"
-              >
-                <Pencil class="size-4" />
-              </button>
-              <button
-                @click="handleDelete(bookmark._id)"
-                class="text-gray-400 hover:text-red-600"
-                title="Delete"
-              >
-                <X class="size-4" />
-              </button>
-            </div>
           </div>
-        </div>
+        </main>
       </div>
-    </main>
+    </div>
 
-    <!-- Form Dialog -->
+    <!-- Bookmark Form Dialog -->
     <BookmarkFormDialog
-      v-model:open="dialogOpen"
+      v-model:open="bookmarkDialogOpen"
       :bookmark="editingBookmark"
-      @submit="handleFormSubmit"
+      :folders="folderStore.folders"
+      @submit="handleBookmarkSubmit"
+    />
+
+    <!-- Folder Form Dialog -->
+    <FolderFormDialog
+      v-model:open="folderDialogOpen"
+      :folder="editingFolder"
+      @submit="handleFolderSubmit"
+    />
+
+    <!-- Delete Confirm Dialog -->
+    <DeleteConfirmDialog
+      v-model:open="deleteDialogOpen"
+      :title="deleteDialogTitle"
+      :description="deleteDialogDescription"
+      @confirm="handleDeleteConfirm"
     />
   </div>
 </template>
