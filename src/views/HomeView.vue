@@ -2,53 +2,66 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useBookmarkStore } from '@/stores/bookmarks'
+import type { Bookmark } from '@/types'
+import { Pencil, X } from 'lucide-vue-next'
+import AppHeader from '@/components/AppHeader.vue'
+import BookmarkSearch from '@/modules/bookmark/components/BookmarkSearch.vue'
+import BookmarkFormDialog from '@/modules/bookmark/components/BookmarkFormDialog.vue'
 
 const router = useRouter()
 const store = useBookmarkStore()
 
-// 新增書籤的表單
-const showForm = ref(false)
-const newTitle = ref('')
-const newUrl = ref('')
-const newDescription = ref('')
-const newTags = ref('')
+// Dialog state
+const dialogOpen = ref(false)
+const editingBookmark = ref<Bookmark | null>(null)
 
-// 搜尋
-const searchQuery = ref('')
+// Open create dialog
+const openCreateDialog = () => {
+  editingBookmark.value = null
+  dialogOpen.value = true
+}
 
-// 新增書籤
-const handleCreate = async () => {
-  const result = await store.createBookmark({
-    title: newTitle.value,
-    url: newUrl.value,
-    description: newDescription.value,
-    tags: newTags.value ? newTags.value.split(',').map((t) => t.trim()) : [],
-  })
+// Open edit dialog
+const openEditDialog = (bookmark: Bookmark) => {
+  editingBookmark.value = bookmark
+  dialogOpen.value = true
+}
 
-  if (result) {
-    // 清空表單
-    newTitle.value = ''
-    newUrl.value = ''
-    newDescription.value = ''
-    newTags.value = ''
-    showForm.value = false
+// Handle form submit (create or update)
+const handleFormSubmit = async (data: {
+  title: string
+  url: string
+  description: string
+  tags: string[]
+}) => {
+  if (editingBookmark.value) {
+    const result = await store.updateBookmark(editingBookmark.value._id, data)
+    if (result) {
+      dialogOpen.value = false
+      editingBookmark.value = null
+    }
+  } else {
+    const result = await store.createBookmark(data)
+    if (result) {
+      dialogOpen.value = false
+    }
   }
 }
 
-// 刪除書籤
+// Delete bookmark
 const handleDelete = async (id: string) => {
   if (!confirm('Are you sure you want to delete this bookmark?')) {
     return
   }
-
   await store.deleteBookmark(id)
 }
 
-const handleSearch = async () => {
-  await store.searchBookmarks(searchQuery.value)
+// Search bookmarks
+const handleSearch = async (query: string) => {
+  await store.searchBookmarks(query)
 }
 
-// 登出
+// Logout
 const handleLogout = () => {
   localStorage.removeItem('token')
   router.push('/login')
@@ -62,89 +75,15 @@ onMounted(() => {
 <template>
   <div class="min-h-screen bg-gray-100">
     <!-- Header -->
-    <header class="bg-white shadow">
-      <div class="max-w-5xl mx-auto px-4 py-4 flex justify-between items-center">
-        <h1 class="text-xl font-bold text-blue-600">BookmarkHub</h1>
-        <div class="flex gap-4">
-          <button
-            @click="showForm = !showForm"
-            class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
-          >
-            {{ showForm ? 'Cancel' : '+ New' }}
-          </button>
-          <button @click="handleLogout" class="text-gray-600 hover:text-red-600">Logout</button>
-        </div>
-      </div>
-    </header>
-    <!-- 搜尋欄 -->
+    <AppHeader :on-new-click="openCreateDialog" :on-logout="handleLogout" />
+
+    <!-- Search -->
     <div class="max-w-5xl mx-auto px-4 pt-8">
-      <form @submit.prevent="handleSearch" class="flex gap-2">
-        <input
-          v-model="searchQuery"
-          type="text"
-          class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-          placeholder="Search bookmarks..."
-        />
-        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-          Search
-        </button>
-      </form>
+      <BookmarkSearch @search="handleSearch" />
     </div>
+
     <!-- Main -->
     <main class="max-w-5xl mx-auto px-4 py-8">
-      <!-- 新增書籤表單 -->
-      <div v-if="showForm" class="bg-white p-6 rounded-lg shadow mb-6">
-        <h2 class="text-lg font-bold mb-4">New Bookmark</h2>
-        <form @submit.prevent="handleCreate">
-          <div class="mb-4">
-            <label class="block text-gray-700 mb-2">Title</label>
-            <input
-              v-model="newTitle"
-              type="text"
-              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Enter title"
-            />
-          </div>
-
-          <div class="mb-4">
-            <label class="block text-gray-700 mb-2">URL</label>
-            <input
-              v-model="newUrl"
-              type="text"
-              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="https://example.com"
-            />
-          </div>
-
-          <div class="mb-4">
-            <label class="block text-gray-700 mb-2">Description</label>
-            <input
-              v-model="newDescription"
-              type="text"
-              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Optional description"
-            />
-          </div>
-
-          <div class="mb-4">
-            <label class="block text-gray-700 mb-2">Tags</label>
-            <input
-              v-model="newTags"
-              type="text"
-              class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="tag1, tag2, tag3"
-            />
-          </div>
-
-          <button
-            type="submit"
-            class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
-          >
-            Save
-          </button>
-        </form>
-      </div>
-
       <!-- Error -->
       <div v-if="store.error" class="bg-red-100 text-red-700 p-3 rounded mb-4">
         {{ store.error }}
@@ -153,12 +92,12 @@ onMounted(() => {
       <!-- Loading -->
       <div v-if="store.loading" class="text-center text-gray-500">Loading...</div>
 
-      <!-- 沒有書籤 -->
+      <!-- No bookmarks -->
       <div v-else-if="store.bookmarks.length === 0" class="text-center text-gray-500">
         No bookmarks yet
       </div>
 
-      <!-- 書籤列表 -->
+      <!-- Bookmark list -->
       <div v-else class="space-y-4">
         <div
           v-for="bookmark in store.bookmarks"
@@ -187,12 +126,32 @@ onMounted(() => {
                 </span>
               </div>
             </div>
-            <button @click="handleDelete(bookmark._id)" class="text-gray-400 hover:text-red-600">
-              ✕
-            </button>
+            <div class="flex gap-2">
+              <button
+                @click="openEditDialog(bookmark)"
+                class="text-gray-400 hover:text-blue-600"
+                title="Edit"
+              >
+                <Pencil class="size-4" />
+              </button>
+              <button
+                @click="handleDelete(bookmark._id)"
+                class="text-gray-400 hover:text-red-600"
+                title="Delete"
+              >
+                <X class="size-4" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </main>
+
+    <!-- Form Dialog -->
+    <BookmarkFormDialog
+      v-model:open="dialogOpen"
+      :bookmark="editingBookmark"
+      @submit="handleFormSubmit"
+    />
   </div>
 </template>

@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/api/axios'
-import type { Bookmark, CreateBookmarkData } from '@/types'
+import type { Bookmark, CreateBookmarkData, UpdateBookmarkData } from '@/types'
 
 export const useBookmarkStore = defineStore('bookmarks', () => {
   const bookmarks = ref<Bookmark[]>([])
@@ -48,6 +48,23 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     }
   }
 
+  const updateBookmark = async (id: string, data: UpdateBookmarkData) => {
+    try {
+      error.value = ''
+      const { data: updatedBookmark } = await api.put<Bookmark>(`/bookmarks/${id}`, data)
+      // 更新 bookmarks 陣列中對應的書籤
+      const index = bookmarks.value.findIndex((b) => b._id === id)
+      if (index !== -1) {
+        bookmarks.value[index] = updatedBookmark
+      }
+      return updatedBookmark
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string } } }
+      error.value = axiosError.response?.data?.error || 'Failed to update bookmark'
+      return null
+    }
+  }
+
   const searchBookmarks = async (query: string) => {
     try {
       loading.value = true
@@ -71,5 +88,6 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     createBookmark,
     deleteBookmark,
     searchBookmarks,
+    updateBookmark,
   }
 })

@@ -39,6 +39,14 @@ export interface CreateBookmarkData {
   tags?: string[]
 }
 
+// 更新書籤資料
+export interface UpdateBookmarkData {
+  title?: string
+  url?: string
+  description?: string
+  tags?: string[]
+}
+
 // API 錯誤
 export interface ApiError {
   error: string
