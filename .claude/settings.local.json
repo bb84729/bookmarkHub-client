@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npx shadcn-vue@latest init --yes)"
+      "Bash(npx shadcn-vue@latest init --yes)",
+      "mcp__shadcn__view_items_in_registries",
+      "mcp__shadcn__get_add_command_for_items"
     ]
   }
 }

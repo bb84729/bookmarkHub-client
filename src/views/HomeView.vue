@@ -164,17 +164,17 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100">
+  <div class="min-h-screen bg-background">
     <!-- Header -->
-    <AppHeader :on-new-click="openCreateBookmarkDialog" :on-logout="handleLogout" />
+    <AppHeader @new-click="openCreateBookmarkDialog" @logout="handleLogout" />
 
     <div class="max-w-6xl mx-auto px-4 py-8">
       <div class="flex gap-6">
         <!-- Sidebar - Folders -->
         <aside class="w-64 flex-shrink-0">
-          <div class="bg-white rounded-lg shadow p-4">
+          <div class="bg-card rounded-lg shadow border border-border p-4">
             <div class="flex items-center justify-between mb-4">
-              <h2 class="font-semibold text-gray-700">Folders</h2>
+              <h2 class="font-semibold text-foreground">Folders</h2>
               <Button variant="ghost" size="icon" @click="openCreateFolderDialog">
                 <FolderPlus class="size-4" />
               </Button>
@@ -198,15 +198,23 @@ onMounted(() => {
           </div>
 
           <!-- Error -->
-          <div v-if="bookmarkStore.error" class="bg-red-100 text-red-700 p-3 rounded mb-4">
+          <div
+            v-if="bookmarkStore.error"
+            class="bg-destructive/10 text-destructive p-3 rounded mb-4"
+          >
             {{ bookmarkStore.error }}
           </div>
 
           <!-- Loading -->
-          <div v-if="bookmarkStore.loading" class="text-center text-gray-500">Loading...</div>
+          <div v-if="bookmarkStore.loading" class="text-center text-muted-foreground">
+            Loading...
+          </div>
 
           <!-- No bookmarks -->
-          <div v-else-if="filteredBookmarks.length === 0" class="text-center text-gray-500 py-8">
+          <div
+            v-else-if="filteredBookmarks.length === 0"
+            class="text-center text-muted-foreground py-8"
+          >
             {{ selectedFolderId ? 'No bookmarks in this folder' : 'No bookmarks yet' }}
           </div>
 
@@ -215,25 +223,25 @@ onMounted(() => {
             <div
               v-for="bookmark in filteredBookmarks"
               :key="bookmark._id"
-              class="bg-white p-4 rounded-lg shadow hover:shadow-md"
+              class="bg-card p-4 rounded-lg shadow border border-border hover:shadow-md"
             >
               <div class="flex justify-between items-start">
                 <div class="flex-1 min-w-0">
                   <a
                     :href="bookmark.url"
                     target="_blank"
-                    class="text-lg font-semibold text-blue-600 hover:underline"
+                    class="text-lg font-semibold text-primary hover:underline"
                   >
                     {{ bookmark.title }}
                   </a>
-                  <p v-if="bookmark.description" class="text-gray-600 mt-1">
+                  <p v-if="bookmark.description" class="text-muted-foreground mt-1">
                     {{ bookmark.description }}
                   </p>
                   <div class="mt-2 flex flex-wrap gap-2">
                     <!-- Folder badge -->
                     <span
                       v-if="getFolderName(bookmark.folder)"
-                      class="bg-blue-50 text-blue-600 text-sm px-2 py-1 rounded"
+                      class="bg-primary/10 text-primary text-sm px-2 py-1 rounded"
                     >
                       📁 {{ getFolderName(bookmark.folder) }}
                     </span>
@@ -241,7 +249,7 @@ onMounted(() => {
                     <span
                       v-for="tag in bookmark.tags"
                       :key="tag"
-                      class="bg-gray-100 text-gray-600 text-sm px-2 py-1 rounded"
+                      class="bg-background text-muted-foreground text-sm px-2 py-1 rounded"
                     >
                       {{ tag }}
                     </span>
@@ -250,14 +258,14 @@ onMounted(() => {
                 <div class="flex gap-2 ml-4">
                   <button
                     @click="openEditBookmarkDialog(bookmark)"
-                    class="text-gray-400 hover:text-blue-600"
+                    class="text-muted-foreground hover:text-primary"
                     title="Edit"
                   >
                     <Pencil class="size-4" />
                   </button>
                   <button
                     @click="openDeleteBookmarkDialog(bookmark._id)"
-                    class="text-gray-400 hover:text-red-600"
+                    class="text-muted-foreground hover:text-destructive"
                     title="Delete"
                   >
                     <Trash2 class="size-4" />

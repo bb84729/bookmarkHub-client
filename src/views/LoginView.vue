@@ -39,23 +39,18 @@ const handleLogin = async () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100 flex items-center justify-center">
-    <div class="bg-white p-8 rounded-lg shadow-md w-full max-w-md">
+  <div class="min-h-screen bg-background flex items-center justify-center">
+    <div class="bg-card p-8 rounded-lg shadow-md border border-border w-full max-w-md">
       <h1 class="text-2xl font-bold text-center mb-6">Login</h1>
 
-      <div v-if="error" class="bg-red-100 text-red-700 p-3 rounded mb-4">
+      <div v-if="error" class="bg-destructive/10 text-destructive p-3 rounded mb-4">
         {{ error }}
       </div>
 
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div class="space-y-2">
           <Label for="email">Email</Label>
-          <Input
-            id="email"
-            v-model="email"
-            type="email"
-            placeholder="Enter your email"
-          />
+          <Input id="email" v-model="email" type="email" placeholder="Enter your email" />
         </div>
 
         <div class="space-y-2">
@@ -73,9 +68,9 @@ const handleLogin = async () => {
         </Button>
       </form>
 
-      <p class="text-center mt-4 text-gray-600">
+      <p class="text-center mt-4 text-muted-foreground">
         Don't have an account?
-        <RouterLink to="/register" class="text-blue-600 hover:underline">Register</RouterLink>
+        <RouterLink to="/register" class="text-primary hover:underline">Register</RouterLink>
       </p>
     </div>
   </div>

@@ -10,6 +10,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import type { Bookmark, Folder } from '@/types'
 
 const props = defineProps<{
@@ -35,7 +42,7 @@ const title = ref('')
 const url = ref('')
 const description = ref('')
 const tags = ref('')
-const folderId = ref<string | null>(null)
+const folderId = ref<string>('none')
 
 const isEditMode = computed(() => !!props.bookmark)
 
@@ -51,13 +58,13 @@ watch(
         url.value = props.bookmark.url
         description.value = props.bookmark.description || ''
         tags.value = props.bookmark.tags.join(', ')
-        folderId.value = props.bookmark.folder || null
+        folderId.value = props.bookmark.folder || 'none'
       } else {
         title.value = ''
         url.value = ''
         description.value = ''
         tags.value = ''
-        folderId.value = null
+        folderId.value = 'none'
       }
     }
   },
@@ -70,7 +77,7 @@ const handleSubmit = () => {
     url: url.value,
     description: description.value,
     tags: tags.value ? tags.value.split(',').map((t) => t.trim()) : [],
-    folder: folderId.value,
+    folder: folderId.value === 'none' ? null : folderId.value,
   })
 }
 
@@ -107,17 +114,18 @@ const handleOpenChange = (value: boolean) => {
         </div>
 
         <div class="space-y-2">
-          <Label for="folder">Folder</Label>
-          <select
-            id="folder"
-            v-model="folderId"
-            class="w-full h-9 px-3 py-1 border border-input rounded-md bg-transparent text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <option :value="null">No Folder</option>
-            <option v-for="folder in folders" :key="folder._id" :value="folder._id">
-              {{ folder.name }}
-            </option>
-          </select>
+          <Label>Folder</Label>
+          <Select v-model="folderId">
+            <SelectTrigger class="w-full">
+              <SelectValue placeholder="Select a folder" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No Folder</SelectItem>
+              <SelectItem v-for="folder in folders" :key="folder._id" :value="folder._id">
+                {{ folder.name }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         <DialogFooter>

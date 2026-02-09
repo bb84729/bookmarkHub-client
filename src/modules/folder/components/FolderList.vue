@@ -24,7 +24,7 @@ const isAllSelected = computed(() => props.selectedFolderId === null)
     <button
       @click="emit('select', null)"
       class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors"
-      :class="isAllSelected ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'"
+      :class="isAllSelected ? 'bg-primary/10 text-primary' : 'hover:bg-muted text-foreground'"
     >
       <FolderIcon class="size-4" />
       <span>All Bookmarks</span>
@@ -35,7 +35,11 @@ const isAllSelected = computed(() => props.selectedFolderId === null)
       <button
         @click="emit('select', folder._id)"
         class="flex-1 flex items-center gap-2 px-3 py-2 rounded-lg text-left transition-colors"
-        :class="selectedFolderId === folder._id ? 'bg-blue-100 text-blue-700' : 'hover:bg-gray-100'"
+        :class="
+          selectedFolderId === folder._id
+            ? 'bg-primary/10 text-primary'
+            : 'hover:bg-muted text-foreground'
+        "
       >
         <FolderIcon class="size-4" />
         <span class="truncate">{{ folder.name }}</span>
@@ -49,7 +53,7 @@ const isAllSelected = computed(() => props.selectedFolderId === null)
         <Button
           variant="ghost"
           size="icon"
-          class="size-7 text-red-500 hover:text-red-600"
+          class="size-7 text-destructive hover:text-destructive"
           @click.stop="emit('delete', folder._id)"
         >
           <Trash2 class="size-3" />
