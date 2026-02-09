@@ -157,6 +157,16 @@ const handleLogout = () => {
   router.push('/login')
 }
 
+// Get favicon URL from bookmark URL
+const getFaviconUrl = (url: string) => {
+  try {
+    const domain = new URL(url).hostname
+    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
+  } catch {
+    return null
+  }
+}
+
 onMounted(() => {
   bookmarkStore.fetchBookmarks()
   folderStore.fetchFolders()
@@ -226,33 +236,43 @@ onMounted(() => {
               class="bg-card p-4 rounded-lg shadow border border-border hover:shadow-md"
             >
               <div class="flex justify-between items-start">
-                <div class="flex-1 min-w-0">
-                  <a
-                    :href="bookmark.url"
-                    target="_blank"
-                    class="text-lg font-semibold text-primary hover:underline"
-                  >
-                    {{ bookmark.title }}
-                  </a>
-                  <p v-if="bookmark.description" class="text-muted-foreground mt-1">
-                    {{ bookmark.description }}
-                  </p>
-                  <div class="mt-2 flex flex-wrap gap-2">
-                    <!-- Folder badge -->
-                    <span
-                      v-if="getFolderName(bookmark.folder)"
-                      class="bg-primary/10 text-primary text-sm px-2 py-1 rounded"
+                <div class="flex gap-3 flex-1 min-w-0">
+                  <!-- Favicon -->
+                  <img
+                    v-if="getFaviconUrl(bookmark.url)"
+                    :src="getFaviconUrl(bookmark.url)!"
+                    alt=""
+                    class="size-6 mt-1 rounded flex-shrink-0"
+                    loading="lazy"
+                  />
+                  <div class="flex-1 min-w-0">
+                    <a
+                      :href="bookmark.url"
+                      target="_blank"
+                      class="text-lg font-semibold text-primary hover:underline"
                     >
-                      📁 {{ getFolderName(bookmark.folder) }}
-                    </span>
-                    <!-- Tags -->
-                    <span
-                      v-for="tag in bookmark.tags"
-                      :key="tag"
-                      class="bg-background text-muted-foreground text-sm px-2 py-1 rounded"
-                    >
-                      {{ tag }}
-                    </span>
+                      {{ bookmark.title }}
+                    </a>
+                    <p v-if="bookmark.description" class="text-muted-foreground mt-1">
+                      {{ bookmark.description }}
+                    </p>
+                    <div class="mt-2 flex flex-wrap gap-2">
+                      <!-- Folder badge -->
+                      <span
+                        v-if="getFolderName(bookmark.folder)"
+                        class="bg-primary/10 text-primary text-sm px-2 py-1 rounded"
+                      >
+                        📁 {{ getFolderName(bookmark.folder) }}
+                      </span>
+                      <!-- Tags -->
+                      <span
+                        v-for="tag in bookmark.tags"
+                        :key="tag"
+                        class="bg-background text-muted-foreground text-sm px-2 py-1 rounded"
+                      >
+                        {{ tag }}
+                      </span>
+                    </div>
                   </div>
                 </div>
                 <div class="flex gap-2 ml-4">
