@@ -8,6 +8,7 @@ import { Pencil, Trash2, FolderPlus } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
 import AppHeader from '@/components/AppHeader.vue'
 import BookmarkSearch from '@/modules/bookmark/components/BookmarkSearch.vue'
+import BookmarkToolbar from '@/modules/bookmark/components/BookmarkToolbar.vue'
 import BookmarkFormDialog from '@/modules/bookmark/components/BookmarkFormDialog.vue'
 import FolderList from '@/modules/folder/components/FolderList.vue'
 import FolderFormDialog from '@/modules/folder/components/FolderFormDialog.vue'
@@ -31,6 +32,9 @@ const deleteTarget = ref<{ type: 'bookmark' | 'folder'; id: string } | null>(nul
 
 // Selected folder filter
 const selectedFolderId = ref<string | null>(null)
+
+// Import/Export
+const fileInputRef = ref<HTMLInputElement | null>(null)
 
 // Filtered bookmarks based on selected folder
 const filteredBookmarks = computed(() => {
@@ -167,6 +171,49 @@ const getFaviconUrl = (url: string) => {
   }
 }
 
+// Import/Export
+const handleExport = () => {
+  const data = bookmarkStore.exportBookmarks()
+  const json = JSON.stringify(data, null, 2)
+  const blob = new Blob([json], { type: 'application/json' })
+  const url = URL.createObjectURL(blob)
+
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `bookmarks-${new Date().toISOString().split('T')[0]}.json`
+  a.click()
+
+  URL.revokeObjectURL(url)
+}
+
+const handleImportClick = () => {
+  fileInputRef.value?.click()
+}
+
+const handleFileChange = async (event: Event) => {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+
+  try {
+    const text = await file.text()
+    const data = JSON.parse(text)
+
+    if (!Array.isArray(data)) {
+      alert('Invalid file format: expected an array of bookmarks')
+      return
+    }
+
+    const { successCount, failCount } = await bookmarkStore.importBookmarks(data)
+    alert(`Import complete!\nSuccess: ${successCount}\nFailed: ${failCount}`)
+  } catch {
+    alert('Failed to parse file. Please make sure it is a valid JSON file.')
+  }
+
+  // Reset input
+  input.value = ''
+}
+
 onMounted(() => {
   bookmarkStore.fetchBookmarks()
   folderStore.fetchFolders()
@@ -175,6 +222,14 @@ onMounted(() => {
 
 <template>
   <div class="min-h-screen bg-background">
+    <!-- Hidden file input for import -->
+    <input
+      ref="fileInputRef"
+      type="file"
+      accept=".json"
+      class="hidden"
+      @change="handleFileChange"
+    />
     <!-- Header -->
     <AppHeader @new-click="openCreateBookmarkDialog" @logout="handleLogout" />
 
@@ -202,6 +257,12 @@ onMounted(() => {
 
         <!-- Main Content -->
         <main class="flex-1">
+          <!-- Toolbar -->
+          <BookmarkToolbar
+            @create="openCreateBookmarkDialog"
+            @import="handleImportClick"
+            @export="handleExport"
+          />
           <!-- Search -->
           <div class="mb-6">
             <BookmarkSearch @search="handleSearch" />

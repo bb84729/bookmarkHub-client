@@ -4,7 +4,6 @@ import { useThemeStore } from '@/stores/theme'
 import { Moon, Sun } from 'lucide-vue-next'
 
 const emit = defineEmits<{
-  newClick: []
   logout: []
 }>()
 
@@ -16,7 +15,6 @@ const themeStore = useThemeStore()
     <div class="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
       <h1 class="text-xl font-bold text-primary">BookmarkHub</h1>
       <div class="flex gap-4">
-        <Button @click="emit('newClick')">+ New</Button>
         <Button variant="ghost" size="icon" @click="themeStore.toggleTheme()">
           <Sun v-if="themeStore.theme === 'dark'" class="size-5" />
           <Moon v-else class="size-5" />

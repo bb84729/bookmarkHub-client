@@ -26,7 +26,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     try {
       error.value = ''
       const { data: newBookmark } = await api.post<Bookmark>('/bookmarks', data)
-      bookmarks.value.unshift(newBookmark)
+      bookmarks.value.push(newBookmark)
       return newBookmark
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { error?: string } } }
@@ -80,6 +80,39 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     }
   }
 
+  // 批次匯入書籤
+  const importBookmarks = async (items: CreateBookmarkData[]) => {
+    let successCount = 0
+    let failCount = 0
+
+    loading.value = true
+    error.value = ''
+
+    for (const item of items) {
+      try {
+        const { data: newBookmark } = await api.post<Bookmark>('/bookmarks', item)
+        bookmarks.value.push(newBookmark)
+        successCount++
+      } catch {
+        failCount++
+      }
+    }
+
+    loading.value = false
+
+    return { successCount, failCount }
+  }
+
+  // 匯出書籤（回傳乾淨的資料）
+  const exportBookmarks = () => {
+    return bookmarks.value.map((b) => ({
+      title: b.title,
+      url: b.url,
+      description: b.description || '',
+      tags: b.tags || [],
+    }))
+  }
+
   return {
     bookmarks,
     loading,
@@ -89,5 +122,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     deleteBookmark,
     searchBookmarks,
     updateBookmark,
+    importBookmarks,
+    exportBookmarks,
   }
 })
