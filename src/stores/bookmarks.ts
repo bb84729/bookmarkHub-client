@@ -113,6 +113,19 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     }))
   }
 
+  // 更新書籤排序
+  const updateOrder = async (items: { id: string; order: number }[]) => {
+    try {
+      error.value = ''
+      await api.put('/bookmarks/reorder', { items })
+      return true
+    } catch (err: unknown) {
+      const axiosError = err as { response?: { data?: { error?: string } } }
+      error.value = axiosError.response?.data?.error || 'Failed to update order'
+      return false
+    }
+  }
+
   return {
     bookmarks,
     loading,
@@ -124,5 +137,6 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     updateBookmark,
     importBookmarks,
     exportBookmarks,
+    updateOrder,
   }
 })
