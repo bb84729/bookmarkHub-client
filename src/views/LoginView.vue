@@ -24,8 +24,9 @@ const handleLogin = async () => {
       password: password.value,
     })
 
-    // 儲存 token
-    localStorage.setItem('token', data.token)
+    // 儲存兩個 token
+    localStorage.setItem('accessToken', data.accessToken)
+    localStorage.setItem('refreshToken', data.refreshToken)
 
     // 跳轉到首頁
     router.push('/')

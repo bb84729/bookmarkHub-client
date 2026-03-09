@@ -23,7 +23,7 @@ const router = createRouter({
 
 // 路由守衛：沒有 token 就跳轉到登入頁
 router.beforeEach((to) => {
-  const token = localStorage.getItem('token')
+  const token = localStorage.getItem('accessToken')
 
   // 沒有 token 且不是去登入或註冊頁
   if (!token && to.name !== 'login' && to.name !== 'register') {

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
+import api from '@/api/axios'
 import { useRouter } from 'vue-router'
 import { useBookmarkStore } from '@/stores/bookmarks'
 import { useFolderStore } from '@/stores/folders'
@@ -172,11 +173,15 @@ const handleSearch = async (query: string) => {
 }
 
 // Logout
-const handleLogout = () => {
-  localStorage.removeItem('token')
-  router.push('/login')
+const handleLogout = async () => {
+  try {
+    await api.post('/auth/logout')
+  } finally {
+    localStorage.removeItem('accessToken')
+    localStorage.removeItem('refreshToken')
+    router.push('/login')
+  }
 }
-
 // Import/Export
 const handleExport = () => {
   const data = bookmarkStore.exportBookmarks()

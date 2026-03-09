@@ -7,7 +7,8 @@ export interface User {
 
 // 登入回傳
 export interface LoginResponse {
-  token: string
+  accessToken: string
+  refreshToken: string
   user: User
 }
 
