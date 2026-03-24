@@ -65,11 +65,12 @@ const getFolderName = (folderId: string | undefined) => {
 const handleReorder = async (reorderedBookmarks: Bookmark[]) => {
   // 更新本地順序
   bookmarkStore.bookmarks = reorderedBookmarks
+  const offset = (bookmarkStore.pagination.page - 1) * bookmarkStore.pagination.limit
 
   // 準備 API 資料
   const items = reorderedBookmarks.map((b, index) => ({
     id: b._id,
-    order: index,
+    order: offset + index,
   }))
 
   // 呼叫 API 儲存
