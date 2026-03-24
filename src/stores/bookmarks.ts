@@ -1,19 +1,38 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import api from '@/api/axios'
-import type { Bookmark, CreateBookmarkData, UpdateBookmarkData } from '@/types'
+import type {
+  Bookmark,
+  CreateBookmarkData,
+  UpdateBookmarkData,
+  Pagination,
+  PaginatedResponse,
+} from '@/types'
 
 export const useBookmarkStore = defineStore('bookmarks', () => {
   const bookmarks = ref<Bookmark[]>([])
   const loading = ref(false)
   const error = ref('')
 
-  const fetchBookmarks = async () => {
+  // 新增分頁狀態
+  const pagination = ref<Pagination>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+    hasNextPage: false,
+    hasPrevPage: false,
+  })
+
+  const fetchBookmarks = async (page = 1, limit = 10) => {
     try {
       loading.value = true
       error.value = ''
-      const { data } = await api.get<{ data: Bookmark[] }>('/bookmarks')
+      const { data } = await api.get<PaginatedResponse<Bookmark>>('/bookmarks', {
+        params: { page, limit },
+      })
       bookmarks.value = data.data
+      pagination.value = data.pagination
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { error?: string } } }
       error.value = axiosError.response?.data?.error || 'Failed to fetch bookmarks'
@@ -65,13 +84,14 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     }
   }
 
-  const searchBookmarks = async (query: string) => {
+  const searchBookmarks = async (query: string, page = 1, limit = 10) => {
     try {
       loading.value = true
       error.value = ''
-      const params = query ? { search: query } : {}
-      const { data } = await api.get<{ data: Bookmark[] }>('/bookmarks', { params })
+      const params = query ? { search: query, page, limit } : { page, limit }
+      const { data } = await api.get<PaginatedResponse<Bookmark>>('/bookmarks', { params })
       bookmarks.value = data.data
+      pagination.value = data.pagination
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { error?: string } } }
       error.value = axiosError.response?.data?.error || 'Failed to search bookmarks'
@@ -130,6 +150,7 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     bookmarks,
     loading,
     error,
+    pagination,
     fetchBookmarks,
     createBookmark,
     deleteBookmark,

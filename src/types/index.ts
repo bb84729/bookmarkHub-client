@@ -24,6 +24,22 @@ export interface Bookmark {
   createdAt: string
 }
 
+// 分頁資訊
+export interface Pagination {
+  total: number
+  page: number
+  limit: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPrevPage: boolean
+}
+
+// 有分頁的 API 回傳格式
+export interface PaginatedResponse<T> {
+  data: T[]
+  pagination: Pagination
+}
+
 // 資料夾
 export interface Folder {
   _id: string

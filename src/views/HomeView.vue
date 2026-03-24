@@ -7,6 +7,14 @@ import { useFolderStore } from '@/stores/folders'
 import type { Bookmark, Folder } from '@/types'
 import { FolderPlus } from 'lucide-vue-next'
 import { Button } from '@/components/ui/button'
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from '@/components/ui/pagination'
 import AppHeader from '@/components/AppHeader.vue'
 import BookmarkSearch from '@/modules/bookmark/components/BookmarkSearch.vue'
 import BookmarkToolbar from '@/modules/bookmark/components/BookmarkToolbar.vue'
@@ -225,6 +233,10 @@ const handleFileChange = async (event: Event) => {
   input.value = ''
 }
 
+const changePage = (page: number) => {
+  bookmarkStore.fetchBookmarks(page)
+}
+
 onMounted(() => {
   bookmarkStore.fetchBookmarks()
   folderStore.fetchFolders()
@@ -309,6 +321,32 @@ onMounted(() => {
             @delete="openDeleteBookmarkDialog"
             @reorder="handleReorder"
           />
+          <!-- 分頁 -->
+          <Pagination
+            class="mt-6"
+            v-slot="{ page }"
+            :total="bookmarkStore.pagination.total"
+            :items-per-page="bookmarkStore.pagination.limit"
+            :default-page="1"
+            @update:page="changePage"
+          >
+            <PaginationContent v-slot="{ items }">
+              <PaginationPrevious />
+
+              <template v-for="(item, index) in items" :key="index">
+                <PaginationItem
+                  v-if="item.type === 'page'"
+                  :value="item.value"
+                  :is-active="item.value === page"
+                >
+                  {{ item.value }}
+                </PaginationItem>
+                <PaginationEllipsis v-else :index="index" />
+              </template>
+
+              <PaginationNext />
+            </PaginationContent>
+          </Pagination>
         </main>
       </div>
     </div>
