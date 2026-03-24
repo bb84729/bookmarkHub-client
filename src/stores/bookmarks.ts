@@ -12,8 +12,8 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
     try {
       loading.value = true
       error.value = ''
-      const { data } = await api.get<Bookmark[]>('/bookmarks')
-      bookmarks.value = data
+      const { data } = await api.get<{ data: Bookmark[] }>('/bookmarks')
+      bookmarks.value = data.data
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { error?: string } } }
       error.value = axiosError.response?.data?.error || 'Failed to fetch bookmarks'
@@ -70,8 +70,8 @@ export const useBookmarkStore = defineStore('bookmarks', () => {
       loading.value = true
       error.value = ''
       const params = query ? { search: query } : {}
-      const { data } = await api.get<Bookmark[]>('/bookmarks', { params })
-      bookmarks.value = data
+      const { data } = await api.get<{ data: Bookmark[] }>('/bookmarks', { params })
+      bookmarks.value = data.data
     } catch (err: unknown) {
       const axiosError = err as { response?: { data?: { error?: string } } }
       error.value = axiosError.response?.data?.error || 'Failed to search bookmarks'
