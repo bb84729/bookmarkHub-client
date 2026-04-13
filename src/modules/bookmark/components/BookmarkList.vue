@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import draggable from 'vuedraggable'
 import { Pencil, Trash2, GripVertical } from 'lucide-vue-next'
 import type { Bookmark } from '@/types'
+import { getFaviconUrl } from '@/lib/bookmark'
 
 const props = defineProps<{
   bookmarks: Bookmark[]
@@ -20,16 +21,6 @@ const localBookmarks = computed({
   get: () => props.bookmarks,
   set: (value: Bookmark[]) => emit('reorder', value),
 })
-
-// 取得 favicon URL
-const getFaviconUrl = (url: string) => {
-  try {
-    const domain = new URL(url).hostname
-    return `https://www.google.com/s2/favicons?domain=${domain}&sz=32`
-  } catch {
-    return null
-  }
-}
 </script>
 
 <template>

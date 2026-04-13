@@ -15,6 +15,7 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from '@/components/ui/pagination'
+import { calculateReorderItems } from '@/lib/bookmark'
 import AppHeader from '@/components/AppHeader.vue'
 import BookmarkSearch from '@/modules/bookmark/components/BookmarkSearch.vue'
 import BookmarkToolbar from '@/modules/bookmark/components/BookmarkToolbar.vue'
@@ -63,17 +64,14 @@ const getFolderName = (folderId: string | undefined) => {
 
 // Handle drag reorder
 const handleReorder = async (reorderedBookmarks: Bookmark[]) => {
-  // 更新本地順序
   bookmarkStore.bookmarks = reorderedBookmarks
-  const offset = (bookmarkStore.pagination.page - 1) * bookmarkStore.pagination.limit
 
-  // 準備 API 資料
-  const items = reorderedBookmarks.map((b, index) => ({
-    id: b._id,
-    order: offset + index,
-  }))
+  const items = calculateReorderItems(
+    reorderedBookmarks.map((b) => b._id),
+    bookmarkStore.pagination.page,
+    bookmarkStore.pagination.limit,
+  )
 
-  // 呼叫 API 儲存
   await bookmarkStore.updateOrder(items)
 }
 
